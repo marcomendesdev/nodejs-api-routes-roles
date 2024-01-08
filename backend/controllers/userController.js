@@ -48,7 +48,12 @@ const registerUser = [
       return;
     }
 
-    const user = await User.create({ name, email, password });
+    let role;
+    if (email === process.env.ADMIN_EMAIL) {
+      role = "admin";
+    }
+
+    const user = await User.create({ name, email, password, role });
 
     const token = new Token({
       userId: user._id,
