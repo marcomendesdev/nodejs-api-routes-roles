@@ -38,10 +38,27 @@ const registerUser = asyncHandler(async (req, res) => {
 
   await token.save();
 
-  const link = `http://localhost:5000/api/verify/${token.token}`;
+  const link = `${process.env.API_URL}/verify/${token.token}`;
   await verifyEmail(user.email, link);
 
   res.status(200).json({ message: "Check your email" });
+});
+
+const emailConfirmation = asyncHandler(async (req, res) => {
+  try {
+    const token = await Token.findOne({ token: req.params.token });
+    await User.updateOne(
+      { _id: token.userId },
+      { $set: { verified: true } },
+      { new: true }
+    );
+    await Token.findOneAndRemove(token._id);
+    // res.status(200).json({ message: "Account verified!" });
+    res.redirect(`${process.env.EMAIL_VERIFIED_URL}`);
+  } catch (error) {
+    // res.status(400).json({ message: "Invalid token!" });
+    res.redirect(`${process.env.EMAIL_NOT_VERIFIED_URL}`);
+  }
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -97,6 +114,7 @@ const getUsers = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
+  emailConfirmation,
   logoutUser,
   getUserProfile,
   updateUserProfile,
