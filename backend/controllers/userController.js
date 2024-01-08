@@ -4,45 +4,72 @@ import generateToken from "../utils/generateToken.js";
 import Token from "../models/token.js";
 import crypto from "crypto";
 import verifyEmail from "../utils/verifyEmail.js";
+import { check, validationResult } from "express-validator";
 
-const authUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+const authUser = [
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  if (user && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
-    res.status(201).json({
-      _id: user._id,
-      email: user.email,
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      generateToken(res, user._id);
+      res.status(201).json({
+        _id: user._id,
+        email: user.email,
+      });
+    } else {
+      res.status(400).json({ message: "Invalid credentials" });
+    }
+  }),
+];
+
+const registerUser = [
+  check("name").notEmpty(),
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { name, email, password } = req.body;
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+
+    const user = await User.create({ name, email, password });
+
+    const token = new Token({
+      userId: user._id,
+      token: crypto.randomBytes(16).toString("hex"),
     });
-  } else {
-    res.status(400).json({ message: "Invalid credentials" });
-  }
-});
 
-const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
-  const userExists = await User.findOne({ email });
+    await token.save();
 
-  if (userExists) {
-    res.status(400).json({ message: "User already exists" });
-    return;
-  }
+    const link = `${process.env.API_URL}/verify/${token.token}`;
+    const linkUrl = new URL(link);
+    if (
+      linkUrl.protocol !== "http:" ||
+      linkUrl.host !== new URL(process.env.API_URL).host
+    ) {
+      throw new Error("Invalid link");
+    }
+    await verifyEmail(user.email, link);
 
-  const user = await User.create({ name, email, password });
-
-  const token = new Token({
-    userId: user._id,
-    token: crypto.randomBytes(16).toString("hex"),
-  });
-
-  await token.save();
-
-  const link = `${process.env.API_URL}/verify/${token.token}`;
-  await verifyEmail(user.email, link);
-
-  res.status(200).json({ message: "Check your email" });
-});
+    res.status(200).json({ message: "Check your email" });
+  }),
+];
 
 const emailConfirmation = asyncHandler(async (req, res) => {
   try {
@@ -53,10 +80,8 @@ const emailConfirmation = asyncHandler(async (req, res) => {
       { new: true }
     );
     await Token.findOneAndRemove(token._id);
-    // res.status(200).json({ message: "Account verified!" });
     res.redirect(`${process.env.EMAIL_VERIFIED_URL}`);
   } catch (error) {
-    // res.status(400).json({ message: "Invalid token!" });
     res.redirect(`${process.env.EMAIL_NOT_VERIFIED_URL}`);
   }
 });
