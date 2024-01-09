@@ -7,11 +7,14 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import connectDB from "./config/db.js";
 import helmet from 'helmet';
 import path from 'path';
+import cors from 'cors';
 
 dotenv.config();
 
 const port = process.env.PORT || 5000;
 const app = express();
+
+app.use(cors());
 
 app.use(helmet());
 
