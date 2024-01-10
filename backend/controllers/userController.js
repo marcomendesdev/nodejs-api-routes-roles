@@ -52,6 +52,8 @@ const registerUser = [
     let role;
     if (email === process.env.ADMIN_EMAIL) {
       role = "admin";
+    } else if (email === process.env.MASTER_EMAIL) {
+      role = "master";
     }
 
     const user = await User.create({ name, email, password, role });
