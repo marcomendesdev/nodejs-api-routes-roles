@@ -5,7 +5,6 @@ import Token from "../models/token.js";
 import crypto from "crypto";
 import verifyEmail from "../utils/verifyEmail.js";
 import { check, validationResult } from "express-validator";
-import { log } from "console";
 
 const authUser = [
   check("email").isEmail(),
@@ -56,7 +55,9 @@ const registerUser = [
       role = "master";
     }
 
-    const user = await User.create({ name, email, password, role });
+    let verified;
+
+    const user = await User.create({ name, email, password, role, verified });
 
     const token = new Token({
       userId: user._id,
@@ -88,7 +89,7 @@ const assignRole = asyncHandler(async (req, res) => {
     res.json(updatedUser);
   } else {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 });
 
@@ -101,7 +102,7 @@ const getUserByEmail = asyncHandler(async (req, res) => {
     res.json(user);
   } else {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 });
 

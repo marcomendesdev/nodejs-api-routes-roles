@@ -36,7 +36,7 @@ const verifyEmail = async (email, link) => {
               Alicia has invited you to join the team on <span style="font-weight: bold;">Meraki UI</span>.
           </p>
           
-          <button style="padding: 8px 24px; margin-top: 16px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; color: #ffffff; text-transform: capitalize; transition: background-color 300ms, transform 300ms; background-color: #3490dc; border-radius: 8px; cursor: pointer; border: none; outline: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); hover-background-color: #2779bd;">
+          <button style="padding: 8px 24px; margin-top: 16px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; color: #ffffff; text-decoration: none; text-transform: capitalize; transition: background-color 300ms, transform 300ms; background-color: #3490dc; border-radius: 8px; cursor: pointer; border: none; outline: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); hover-background-color: #2779bd;">
           <a href="${sanitizedLink}">Click here to activate your account</a>
           </button>
           
