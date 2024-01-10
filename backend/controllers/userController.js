@@ -5,6 +5,7 @@ import Token from "../models/token.js";
 import crypto from "crypto";
 import verifyEmail from "../utils/verifyEmail.js";
 import { check, validationResult } from "express-validator";
+import { log } from "console";
 
 const authUser = [
   check("email").isEmail(),
@@ -76,6 +77,32 @@ const registerUser = [
   }),
 ];
 
+const assignRole = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.params.email });
+  console.log(user);
+  if (user) {
+    user.role = req.body.role;
+    const updatedUser = await user.save();
+    res.json(updatedUser);
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
+
+const getUserByEmail = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.params.email });
+
+  console.log(user);
+
+  if (user) {
+    res.json(user);
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
+
 const emailConfirmation = asyncHandler(async (req, res) => {
   try {
     const token = await Token.findOne({ token: req.params.token });
@@ -144,6 +171,8 @@ const getUsers = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
+  assignRole,
+  getUserByEmail,
   emailConfirmation,
   logoutUser,
   getUserProfile,
