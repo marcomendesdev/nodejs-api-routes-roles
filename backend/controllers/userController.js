@@ -6,6 +6,7 @@ import crypto from "crypto";
 import verifyEmail from "../utils/verifyEmail.js";
 import { check, validationResult } from "express-validator";
 
+// logs in user
 const authUser = [
   check("email").isEmail(),
   check("password").isLength({ min: 5 }),
@@ -30,6 +31,7 @@ const authUser = [
   }),
 ];
 
+// registers user
 const registerUser = [
   check("name").notEmpty(),
   check("email").isEmail(),
@@ -80,6 +82,53 @@ const registerUser = [
   }),
 ];
 
+// resets user password
+const resetPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (user) {
+    const token = new Token({
+      userId: user._id,
+      token: crypto.randomBytes(16).toString("hex"),
+    });
+
+    await token.save();
+
+    const link = `${process.env.CLIENT_URL}/confirm-password/${token.token}`;
+    await verifyEmail(user.email, link);
+
+    res.status(200).json({ message: "Check your email" });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
+// confirms password reset
+const confirmPassword = [
+  check("email").isEmail(),
+  check("password").isLength({ min: 5 }),
+  asyncHandler(async (req, res) => {
+    try {
+      const token = await Token.findOne({ token: req.params.token });
+      const user = await User.findById(token.userId);
+
+      if (user) {
+        user.password = req.body.password;
+        const updatedUser = await user.save();
+        await Token.findOneAndRemove(token._id);
+        res.status(200).json(updatedUser);
+      } else {
+        res.status(404);
+        throw new Error("User not found");
+      }
+    } catch (error) {
+      res.status(400).json({ message: "Invalid token" });
+    }
+  }),
+];
+
+// assigns role to user
 const assignRole = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: req.params.email });
   console.log(user);
@@ -93,6 +142,7 @@ const assignRole = asyncHandler(async (req, res) => {
   }
 });
 
+// finds user by email
 const getUserByEmail = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: req.params.email });
 
@@ -106,6 +156,7 @@ const getUserByEmail = asyncHandler(async (req, res) => {
   }
 });
 
+// verifies user email and activates account
 const emailConfirmation = asyncHandler(async (req, res) => {
   try {
     const token = await Token.findOne({ token: req.params.token });
@@ -121,11 +172,13 @@ const emailConfirmation = asyncHandler(async (req, res) => {
   }
 });
 
+// logs out user
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
   res.status(200).json({ message: "Logout user" });
 });
 
+// gets own user profile
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = {
     _id: req.user._id,
@@ -135,6 +188,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   res.status(200).json(user);
 });
 
+// updates own user profile
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
@@ -155,6 +209,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   generateToken(res, updatedUser._id);
 });
 
+// deletes own user profile
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   if (user) {
@@ -166,6 +221,7 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
+// gets all users
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find({});
   res.status(200).json(users);
@@ -174,6 +230,8 @@ const getUsers = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
+  resetPassword,
+  confirmPassword,
   assignRole,
   getUserByEmail,
   emailConfirmation,

@@ -2,6 +2,8 @@ import express from "express";
 import {
   authUser,
   registerUser,
+  resetPassword,
+  confirmPassword,
   assignRole,
   getUserByEmail,
   emailConfirmation,
@@ -17,14 +19,16 @@ import checkRole from "../middleware/checkUserRoleMiddleware.js";
 const router = express.Router();
 
 router.route("/users").get(getUsers);
+router.route("/users/:email").get(protect, getUserByEmail);
 
 router.get("/verify/:token", emailConfirmation);
+router.post("/reset-password", resetPassword);
+router.post("/confirm-password/:token", confirmPassword);
 
 router
   .route("/assign-role/:email")
   .patch(protect, checkRole("master"), assignRole);
 
-router.route("/users/:email").get(protect, getUserByEmail);
 
 router.post("/auth", authUser);
 router.post("/register", registerUser);
