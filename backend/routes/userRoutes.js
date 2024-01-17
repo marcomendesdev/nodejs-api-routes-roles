@@ -26,7 +26,7 @@ router.post("/reset-password", resetPassword);
 router.post("/confirm-password/:token", confirmPassword);
 
 router
-  .route("/assign-role/:email")
+  .route("/assign-role")
   .patch(protect, checkRole("master"), assignRole);
 
 

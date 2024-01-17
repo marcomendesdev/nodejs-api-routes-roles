@@ -130,7 +130,7 @@ const confirmPassword = [
 
 // assigns role to user
 const assignRole = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ email: req.params.email });
+  const user = await User.findOne({ email: req.body.email });
   console.log(user);
   if (user) {
     user.role = req.body.role;
