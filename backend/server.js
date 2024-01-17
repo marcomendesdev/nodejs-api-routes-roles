@@ -15,7 +15,7 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000', // substitua por seu domínio Next.js
+  origin: 'http://localhost:3000', 
   credentials: true,
 }));
 
